@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>王贵平案时间轴 - 移动端优化版</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4F46E5',
+                        secondary: '#7C3AED',
+                        neutral: {
+                            100: '#F3F4F6',
+                            200: '#E5E7EB',
+                            300: '#D1D5DB',
+                            400: '#9CA3AF',
+                            500: '#6B7280',
+                            600: '#4B5563',
+                            700: '#374151',
+                            800: '#1F2937',
+                            900: '#111827'
+                        }
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'system-ui', 'sans-serif']
+                    }
+                }
+            }
+        };
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .timeline-line {
+                @apply absolute left-3.5 top-0 bottom-0 w-0.5 bg-neutral-200;
+            }
+            .timeline-circle {
+                @apply absolute left-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all duration-300;
+            }
+            .timeline-content {
+                @apply opacity-0 pointer-events-none transform scale-95 max-h-0 overflow-hidden transition-all duration-500 ease-in-out;
+                transition-property: opacity, max-height, transform;
+            }
+            .timeline-content.active {
+                @apply opacity-100 pointer-events-auto transform scale-100 max-h-[2000px];
+            }
+            .time-node {
+                @apply relative pl-10 py-4 cursor-pointer outline-none;
+            }
+            .time-node:focus-visible .timeline-circle {
+                @apply ring-2 ring-offset-2 ring-primary;
+            }
+            .time-node.active .timeline-circle {
+                @apply bg-primary border-primary text-white;
+            }
+            .time-node:not(.active) .timeline-circle {
+                @apply bg-white border-neutral-300 text-neutral-400;
+            }
+            .time-node:not(.active):hover .timeline-circle {
+                @apply border-primary text-primary;
+            }
+            
+            /* 横向时间轴（移动端优化版） */
+            @media (max-width: 767px) {
+                .mobile-timeline-container {
+                    @apply bg-white shadow-md fixed top-[60px] left-0 right-0 z-20;
+                    height: 120px;
+                    border-bottom: 1px solid #e5e7eb;
+                    display: block !important; /* 确保显示 */
+                }
+                .timeline-scroll {
+                    @apply flex flex-row overflow-x-auto space-x-4 pb-2 px-2 h-full pt-4;
+                    scrollbar-width: thin; /* Firefox */
+                    -ms-overflow-style: none; /* IE/Edge */
+                }
+                .timeline-scroll::-webkit-scrollbar {
+                    height: 4px; /* 调整滚动条高度 */
+                }
+                .timeline-scroll::-webkit-scrollbar-track {
+                    @apply bg-neutral-100 rounded-full;
+                }
+                .timeline-scroll::-webkit-scrollbar-thumb {
+                    @apply bg-neutral-300 rounded-full;
+                }
+                .timeline-scroll::-webkit-scrollbar-thumb:hover {
+                    @apply bg-neutral-400;
+                }
+                .timeline-line {
+                    @apply hidden;
+                }
+                .time-node {
+                    @apply pl-0 min-w-[120px] flex-shrink-0 py-3;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                }
+                .timeline-circle {
+                    @apply relative mb-2;
+                    position: relative;
+                    left: auto;
+                    top: auto;
+                    transform: none;
+                }
+                .content-container {
+                    @apply mt-[180px] h-[calc(100vh-180px)] overflow-y-auto;
+                }
+                .social-icons-container {
+                    @apply fixed bottom-0 left-0 right-0 bg-white border-t border-neutral-200 z-10;
+                    padding: 10px 0;
+                }
+            }
+            
+            /* 折叠菜单动画 */
+            .mobile-menu {
+                max-height: 0;
+                overflow: hidden;
+                transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            .mobile-menu.open {
+                max-height: 500px;
+            }
+        }
+    </style>
+</head>
+<body class="bg-neutral-100 font-inter text-neutral-800 min-h-screen">
+    <!-- 顶部导航 - 优化版 -->
+    <header class="bg-white shadow-sm sticky top-0 z-30">
+        <div class="container mx-auto px-4 py-3 flex flex-col md:flex-row md:justify-between md:items-center gap-3">
+            <!-- Logo与标题 -->
+            <div class="flex items-center justify-between w-full md:w-auto">
+                <a href="https://github.com/tpzmn/tpzmn.github.io/index.html" class="flex items-center hover:scale-110 transition-transform" title="天平啄木鸟">
+                    <img src="https://github.com/tpzmn/tpzmn.github.io/images/天平啄木鸟.png" alt="天平啄木鸟 Logo" class="w-8 h-8 object-contain rounded" />
+                    <span class="ml-2 text-2xl font-extrabold tracking-tight text-neutral-800">天平啄木鸟</span>
+                </a>
+                
+                <!-- 汉堡菜单按钮（移动端显示） -->
+                <button id="mobileMenuToggle" class="md:hidden p-2 rounded-md text-neutral-600 hover:bg-neutral-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary">
+                    <i class="fa fa-bars text-xl"></i>
+                </button>
+            </div>
+
+            <!-- 快捷链接 - 桌面端完整显示 -->
+            <nav class="hidden md:flex flex-1 flex-wrap justify-center gap-2 md:gap-4 mt-2 md:mt-0">
+                <a href="F:\tpzmn\tpzmn.github.io\FormalResponseApplication.html" class="px-4 py-2 rounded-lg bg-neutral-100 hover:bg-primary/10 text-primary font-medium transition">正式回应申请</a>
+                <a href="https://tpzmn.github.io/Dossier.html" target="_blank" class="px-4 py-2 rounded-lg bg-neutral-100 hover:bg-primary/10 text-primary font-medium transition">卷宗资料表格</a>
+                <a href="https://tpzmn.github.io/PSAWR.html" target="_blank" class="px-4 py-2 rounded-lg bg-neutral-100 hover:bg-primary/10 text-primary font-medium transition">公安正式回应请求</a>
+                <a href="https://myphone168.github.io/" class="px-4 py-2 rounded-lg bg-neutral-100 hover:bg-primary/10 text-primary font-medium transition">再审申请书</a>
+                <a href="https://tpzmn.github.io/PostReleaseVisit.html" class="px-4 py-2 rounded-lg bg-neutral-100 hover:bg-primary/10 text-primary font-medium transition">释后之访羁押侦查篇</a>
+                <a href="https://tpzmn.github.io/" target="_blank" class="px-4 py-2 rounded-lg bg-neutral-100 hover:bg-primary/10 text-primary font-medium transition">全案脉络</a>
+            </nav>
+            
+            <!-- 移动端折叠菜单 -->
+            <div id="mobileMenu" class="mobile-menu w-full md:hidden">
+                <div class="flex flex-col gap-2 py-3">
+                    <a href="F:\tpzmn\tpzmn.github.io\FormalResponseApplication.html" class="px-4 py-3 rounded-lg bg-neutral-100 hover:bg-primary/10 text-primary font-medium transition flex items-center">
+                        <i class="fa fa-file-text-o mr-2"></i>正式回应申请
+                    </a>
+                    <a href="https://tpzmn.github.io/Dossier.html" target="_blank" class="px-4 py-3 rounded-lg bg-neutral-100 hover:bg-primary/10 text-primary font-medium transition flex items-center">
+                        <i class="fa fa-table mr-2"></i>卷宗资料表格
+                    </a>
+                    <a href="https://tpzmn.github.io/PSAWR.html" target="_blank" class="px-4 py-3 rounded-lg bg-neutral-100 hover:bg-primary/10 text-primary font-medium transition flex items-center">
+                        <i class="fa fa-shield mr-2"></i>公安正式回应请求
+                    </a>
+                    <a href="https://myphone168.github.io/" class="px-4 py-3 rounded-lg bg-neutral-100 hover:bg-primary/10 text-primary font-medium transition flex items-center">
+                        <i class="fa fa-gavel mr-2"></i>再审申请书
+                    </a>
+                    <a href="https://tpzmn.github.io/PostReleaseVisit.html" class="px-4 py-3 rounded-lg bg-neutral-100 hover:bg-primary/10 text-primary font-medium transition flex items-center">
+                        <i class="fa fa-search mr-2"></i>释后之访羁押侦查篇
+                    </a>
+                    <a href="https://tpzmn.github.io/" target="_blank" class="px-4 py-3 rounded-lg bg-neutral-100 hover:bg-primary/10 text-primary font-medium transition flex items-center">
+                        <i class="fa fa-sitemap mr-2"></i>全案脉络
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 个人信息与社交 -->
+        <div class="bg-neutral-50 border-t border-neutral-200 hidden md:block">
+            <div class="container mx-auto px-4 py-3 flex flex-col md:flex-row md:justify-between md:items-center gap-2">
+                <div class="flex items-center space-x-6 mt-2 md:mt-0">
+                    <span class="text-xs text-neutral-500">你所在位置：<span class="font-medium text-primary">天平啄木鸟的主页</span></span>
+                </div>
+                <!-- 社交媒体链接右对齐 -->
+                <div class="flex justify-end w-full md:w-auto space-x-3 mt-2 md:mt-0">
+                    <a href="https://weixin.qq.com/" class="hover:scale-110 transition-transform" title="微信">
+                        <img src="https://github.com/tpzmn/tpzmn.github.io/images/微信.png" alt="微信" class="w-6 h-6 object-contain rounded" />
+                    </a>
+                    <a href="https://www.douyin.com/" class="hover:scale-110 transition-transform" title="抖音">
+                        <img src="https://github.com/tpzmn/tpzmn.github.io/images/抖音.png" alt="抖音" class="w-6 h-6 object-contain rounded" />
+                    </a>
+                    <a href="https://www.kuaishou.com/" class="hover:scale-110 transition-transform" title="快手">
+                        <img src="https://github.com/tpzmn/tpzmn.github.io/images/快手.png" alt="快手" class="w-6 h-6 object-contain rounded" />
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 移动端时间轴容器（固定在顶部） -->
+    <div class="mobile-timeline-container md:hidden">
+        <div class="timeline-scroll">
+            <div class="time-node active" data-content="content1" tabindex="0">
+                <div class="timeline-circle">
+                    <i class="fa fa-dot-circle-o"></i>
+                </div>
+                <div class="text-center">
+                    <h4 class="font-semibold text-neutral-800 text-sm">2024-12-31</h4>
+                    <p class="text-xs text-neutral-500 mt-1">胡督察回访</p>
+                </div>
+            </div>
+            <div class="time-node" data-content="content34" tabindex="0">
+                <div class="timeline-circle">
+                    <i class="fa fa-circle-o"></i>
+                </div>
+                <div class="text-center">
+                    <h4 class="font-semibold text-neutral-800 text-sm">2024-12-25</h4>
+                    <p class="text-xs text-neutral-500 mt-1">和林筑萍通话</p>
+                </div>
+            </div>
+            <div class="time-node" data-content="content2" tabindex="0">
+                <div class="timeline-circle">
+                    <i class="fa fa-circle-o"></i>
+                </div>
+                <div class="text-center">
+                    <h4 class="font-semibold text-neutral-800 text-sm">2024-12-18</h4>
+                    <p class="text-xs text-neutral-500 mt-1">电话诱骗</p>
+                </div>
+            </div>
+            <div class="time-node" data-content="content3" tabindex="0">
+                <div class="timeline-circle">
+                    <i class="fa fa-circle-o"></i>
+                </div>
+                <div class="text-center">
+                    <h4 class="font-semibold text-neutral-800 text-sm">2024-12-16</h4>
+                    <p class="text-xs text-neutral-500 mt-1">重演造假</p>
+                </div>
+            </div>
+            <div class="time-node" data-content="content33" tabindex="0">
+                <div class="timeline-circle">
+                    <i class="fa fa-circle-o"></i>
+                </div>
+                <div class="text-center">
+                    <h4 class="font-semibold text-neutral-800 text-sm">2024-12-12</h4>
+                    <p class="text-xs text-neutral-500 mt-1">法院来电</p>
+                </div>
+            </div>
+            <div class="time-node" data-content="content32" tabindex="0">
+                <div class="timeline-circle">
+                    <i class="fa fa-circle-o"></i>
+                </div>
+                <div class="text-center">
+                    <h4 class="font-semibold text-neutral-800 text-sm">2024-12-06</h4>
+                    <p class="text-xs text-neutral-500 mt-1">贵州110报警</p>
+                </div>
+            </div>
+            <div class="time-node" data-content="content35" tabindex="0">
+                <div class="timeline-circle">
+                    <i class="fa fa-circle-o"></i>
+                </div>
+                <div class="text-center">
+                    <h4 class="font-semibold text-neutral-800 text-sm">2024-11-28</h4>
+                    <p class="text-xs text-neutral-500 mt-1">查档受阻</p>
+                </div>
+            </div>
+            <div class="time-node" data-content="content4" tabindex="0">
+                <div class="timeline-circle">
+                    <i class="fa fa-circle-o"></i>
+                </div>
+                <div class="text-center">
+                    <h4 class="font-semibold text-neutral-800 text-sm">2024-11-21</h4>
+                    <p class="text-xs text-neutral-500 mt-1">寄回裁定</p>
+                </div>
+            </div>
+            <div class="time-node" data-content="content31" tabindex="0">
+                <div class="timeline-circle">
+                    <i class="fa fa-circle-o"></i>
+                </div>
+                <div class="text-center">
+                    <h4 class="font-semibold text-neutral-800 text-sm">2024-11-15</h4>
+                    <p class="text-xs text-neutral-500 mt-1">新证据发现</p>
+                </div>
+            </div>
+            <div class="time-node" data-content="content7" tabindex="0">
+                <div class="timeline-circle">
+                    <i class="fa fa-circle-o"></i>
+                </div>
+                <div class="text-center">
+                    <h4 class="font-semibold text-neutral-800 text-sm">2024-11-13</h4>
+                    <p class="text-xs text-neutral-500 mt-1">待填事项</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主要内容 -->
+    <main class="container mx-auto px-4 py-8 content-container">
+        <div class="max-w-5xl mx-auto bg-white rounded-xl shadow-md overflow-hidden">
+            <div class="p-6 border-b border-neutral-200">
+                <h2 class="text-2xl font-bold text-neutral-800">（2019）黔0103刑初821号刑事案件发展脉络</h2>
+                <p class="text-neutral-500 mt-1">令人匪夷所思的奇葩案件</p>
+            </div>
+            <div class="flex flex-col md:flex-row">
+                <!-- 左侧内容区 -->
+                <div class="w-full md:w-2/3 p-6 border-b md:border-b-0 md:border-r border-neutral-200 transition-all duration-500" id="contentView" aria-live="polite" style="min-height:320px;">
+                    <!-- 内容由JS动态插入 -->
+                </div>
+                <!-- 右侧时间轴（桌面端） -->
+                <div class="w-full md:w-1/3 p-6 overflow-x-auto md:overflow-y-auto max-h-[70vh] hidden md:block">
+                    <div class="relative">
+                        <div class="timeline-line"></div>
+                        <div class="time-node active" data-content="content1" tabindex="0">
+                            <div class="timeline-circle">
+                                <i class="fa fa-dot-circle-o"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-neutral-800">2024年12月31日</h4>
+                                <p class="text-sm text-neutral-500 mt-1">胡督察以电话方式回访的奥秘</p>
+                            </div>
+                        </div>
+                        <div class="time-node" data-content="content34" tabindex="0">
+                            <div class="timeline-circle">
+                                <i class="fa fa-circle-o"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-neutral-800">2024年12月25日</h4>
+                                <p class="text-sm text-neutral-500 mt-1">和林筑萍通电话</p>
+                            </div>
+                        </div>
+                        <div class="time-node" data-content="content2" tabindex="0">
+                            <div class="timeline-circle">
+                                <i class="fa fa-circle-o"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-neutral-800">2024年12月18日</h4>
+                                <p class="text-sm text-neutral-500 mt-1">以电话诱骗制造程序空转、以证据筛选掩盖实体违法</p>
+                            </div>
+                        </div>
+                        <div class="time-node" data-content="content3" tabindex="0">
+                            <div class="timeline-circle">
+                                <i class="fa fa-circle-o"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-neutral-800">2024年12月16日</h4>
+                                <p class="text-sm text-neutral-500 mt-1">重演故意造假</p>
+                            </div>
+                        </div>
+                        <div class="time-node" data-content="content33" tabindex="0">
+                            <div class="timeline-circle">
+                                <i class="fa fa-circle-o"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-neutral-800">2024年12月12日</h4>
+                                <p class="text-sm text-neutral-500 mt-1">二审法院来电、检察院来电</p>
+                            </div>
+                        </div>
+                        <div class="time-node" data-content="content32" tabindex="0">
+                            <div class="timeline-circle">
+                                <i class="fa fa-circle-o"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-neutral-800">2024年12月6日</h4>
+                                <p class="text-sm text-neutral-500 mt-1">通过贵州110报警</p>
+                            </div>
+                        </div>
+                        <div class="time-node" data-content="content35" tabindex="0">
+                            <div class="timeline-circle">
+                                <i class="fa fa-circle-o"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-neutral-800">2024年11月28日</h4>
+                                <p class="text-sm text-neutral-500 mt-1">去一审档案室查"正卷1"缺失内容被设阻</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <!-- 移动端社交媒体图标（底部固定） -->
+    <div class="social-icons-container md:hidden">
+        <div class="container mx-auto flex justify-center space-x-8">
+            <a href="https://weixin.qq.com/" class="hover:scale-110 transition-transform" title="微信">
+                <img src="https://github.com/tpzmn/tpzmn.github.io/images/微信.png" alt="微信" class="w-8 h-8 object-contain rounded" />
+            </a>
+            <a href="https://www.douyin.com/" class="hover:scale-110 transition-transform" title="抖音">
+                <img src="https://github.com/tpzmn/tpzmn.github.io/images/抖音.png" alt="抖音" class="w-8 h-8 object-contain rounded" />
+            </a>
+            <a href="https://www.kuaishou.com/" class="hover:scale-110 transition-transform" title="快手">
+                <img src="https://github.com/tpzmn/tpzmn.github.io/images/快手.png" alt="快手" class="w-8 h-8 object-contain rounded" />
+            </a>
+        </div>
+    </div>
+    
+    <!-- 页脚 -->
+    <footer class="bg-white border-t border-neutral-200 mt-12 md:mt-0">
+        <div class="bg-neutral-50 border-t border-neutral-200">
+            <div class="container mx-auto px-4 py-8">
+                <div class="text-center text-sm text-neutral-500">
+                    &copy; 2025 天平啄木鸟. 保留所有权利.
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    <script>
+        // 折叠菜单功能
+        document.getElementById('mobileMenuToggle').addEventListener('click', function() {
+            const mobileMenu = document.getElementById('mobileMenu');
+            const icon = this.querySelector('i');
+            
+            mobileMenu.classList.toggle('open');
+            
+            if (mobileMenu.classList.contains('open')) {
+                icon.classList.remove('fa-bars');
+                icon.classList.add('fa-times');
+            } else {
+                icon.classList.remove('fa-times');
+                icon.classList.add('fa-bars');
+            }
+        });
+        
+        // 当点击菜单外的区域时关闭菜单
+        document.addEventListener('click', function(event) {
+            const mobileMenu = document.getElementById('mobileMenu');
+            const menuToggle = document.getElementById('mobileMenuToggle');
+            
+            if (mobileMenu.classList.contains('open') && 
+                !mobileMenu.contains(event.target) && 
+                event.target !== menuToggle && 
+                !menuToggle.contains(event.target)) {
+                
+                mobileMenu.classList.remove('open');
+                const icon = menuToggle.querySelector('i');
+                icon.classList.remove('fa-times');
+                icon.classList.add('fa-bars');
+            }
+        });
+        
+        // 数据结构优化：分离时间轴节点数据和内容数据
+        const timelineData = [
+            {
+                id: 'content1',
+                date: '2024年12月31日',
+                type: '胡督察以电话方式回访的奥秘',
+                icon: 'fa-rocket',
+                color: 'primary',
+                content: `
+                    <div class="flex items-start space-x-4">
+                        <div class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                            <i class="fa fa-rocket text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-neutral-800">2024年12月31日</h3>
+                            <p class="text-neutral-500 mt-1">胡督察以电话方式回访的奥秘</p>
+                        </div>
+                    </div>
+                    <div class="mt-6 bg-neutral-50 rounded-lg p-4">
+                        <h4 class="font-semibold text-neutral-700">胡督察以电话方式回访的奥秘</h4>
+                        <ul class="mt-3 space-y-2">
+                            <li class="flex items-start">
+                                <i class="fa fa-check-circle text-primary mt-1 mr-2"></i>
+                                <span>规避法定书面回复义务</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fa fa-check-circle text-primary mt-1 mr-2"></i>
+                                <span>回避核心违法事实调查</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fa fa-check-circle text-primary mt-1 mr-2"></i>
+                                <span>以非正式程序延续内部包庇</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="mt-6">
+                        <div class="rounded-lg overflow-hidden shadow-sm border border-neutral-200">
+                            <img src="https://images.unsplash.com/photo-1586769852836-bc069f19e1b6?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&h=300&w=600" alt="电话回访" class="w-full h-48 object-cover">
+                            <div class="p-3 bg-white">
+                                <p class="text-sm text-neutral-600">电话回访证据材料</p>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                id: 'content2',
+                date: '2024年12月18日',
+                type: '以电话诱骗制造程序空转、以证据筛选掩盖实体违法',
+                icon: 'fa-pencil',
+                color: 'secondary',
+                content: `
+                    <div class="flex items-start space-x-4">
+                        <div class="w-12 h-12 rounded-lg bg-secondary/10 flex items-center justify-center text-secondary">
+                            <i class="fa fa-pencil text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-neutral-800">2024年12月18日</h3>
+                            <p class="text-neutral-500 mt-1">以电话诱骗制造程序空转、以证据筛选掩盖实体违法</p>
+                        </div>
+                    </div>
+                    <div class="mt-6 bg-neutral-50 rounded-lg p-4">
+                        <h4 class="font-semibold text-neutral-700">‘承诺 - 推诿 - 拒收’的闭环操作</h4>
+                        <ul class="mt-3 space-y-2">
+                            <li class="flex items-start">
+                                <i class="fa fa-check-circle text-secondary mt-1 mr-2"></i>
+                                <span>电话承诺、现场推诿、敷衍塞责走过场</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fa fa-check-circle text-secondary mt-1 mr-2"></i>
+                                <span>督察选择性执法、签字即 “事实”、极力掩饰不法办案问题</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fa fa-check-circle text-secondary mt-1 mr-2"></i>
+                                <span>避重就轻司法难公</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="mt-6">
+                        <div class="rounded-lg overflow-hidden shadow-sm border border-neutral-200">
+                            <img src="https://images.unsplash.com/photo-1584438784894-089d6a62b8fa?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&h=300&w=600" alt="证据材料" class="w-full h-48 object-cover">
+                            <div class="p-3 bg-white">
+                                <p class="text-sm text-neutral-600">相关证据材料</p>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                id: 'content3',
+                date: '2024年12月16日',
+                type: '重演故意造假',
+                icon: 'fa-bolt',
+                color: 'green-500',
+                content: `
+                    <div class="flex items-start space-x-4">
+                        <div class="w-12 h-12 rounded-lg bg-green-500/10 flex items-center justify-center text-green-500">
+                            <i class="fa fa-bolt text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-neutral-800">2024年12月16日</h3>
+                            <p class="text-neutral-500 mt-1">重演故意造假</p>
+                        </div>
+                    </div>
+                    <div class="mt-6 bg-neutral-50 rounded-lg p-4">
+                        <h4 class="font-semibold text-neutral-700">故意造假详情</h4>
+                        <ul class="mt-3 space-y-2">
+                            <li class="flex items-start">
+                                <i class="fa fa-check-circle text-green-500 mt-1 mr-2"></i>
+                                <span>违法回避原则，而依法告知向有权机关处理</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fa fa-check-circle text-green-500 mt-1 mr-2"></i>
+                                <span>笔录用词不准难掩之前不法办案事实，制作询问通知书问题揭露非正式问题，走形式的敷衍目的</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fa fa-check-circle text-green-500 mt-1 mr-2"></i>
+                                <span>报案人联系信息造假将问题暴露无遗</span>
+                            </li>
+                        </ul>
+                    </div>
+                `
+            },
+            {
+                id: 'content33',
+                date: '2024年12月12日',
+                type: '二审法院来电、检察院来电',
+                icon: 'fa-phone',
+                color: 'blue-500',
+                content: `
+                    <div class="flex items-start space-x-4">
+                        <div class="w-12 h-12 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-500">
+                            <i class="fa fa-phone text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-neutral-800">2024年12月12日</h3>
+                            <p class="text-neutral-500 mt-1">二审法院来电、检察院来电</p>
+                        </div>
+                    </div>
+                    <div class="mt-6 bg-neutral-50 rounded-lg p-4">
+                        <h4 class="font-semibold text-neutral-700">通话记录详情</h4>
+                        <ul class="mt-3 space-y-2">
+                            <li class="flex items-start">
+                                <i class="fa fa-check-circle text-blue-500 mt-1 mr-2"></i>
+                                <span>二审法院来电沟通案件进展</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fa fa-check-circle text-blue-500 mt-1 mr-2"></i>
+                                <span>检察院来电询问补充材料</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fa fa-check-circle text-blue-500 mt-1 mr-2"></i>
+                                <span>双方沟通案件关键时间节点</span>
+                            </li>
+                        </ul>
+                    </div>
+                `
+            },
+            {
+                id: 'content32',
+                date: '2024年12月6日',
+                type: '通过贵州110报警',
+                icon: 'fa-exclamation-triangle',
+                color: 'red-500',
+                content: `
+                    <div class="flex items-start space-x-4">
+                        <div class="w-12 h-12 rounded-lg bg-red-500/10 flex items-center justify-center text-red-500">
+                            <i class="fa fa-exclamation-triangle text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-neutral-800">2024年12月6日</h3>
+                            <p class="text-neutral-500 mt-1">通过贵州110报警</p>
+                        </div>
+                    </div>
+                    <div class="mt-6 bg-neutral-50 rounded-lg p-4">
+                        <h4 class="font-semibold text-neutral-700">报警记录详情</h4>
+                        <ul class="mt-3 space-y-2">
+                            <li class="flex items-start">
+                                <i class="fa fa-check-circle text-red-500 mt-1 mr-2"></i>
+                                <span>通过贵州110平台正式报案</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fa fa-check-circle text-red-500 mt-1 mr-2"></i>
+                                <span>提交相关证据材料</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fa fa-check-circle text-red-500 mt-1 mr-2"></i>
+                                <span>获取案件受理编号</span>
+                            </li>
+                        </ul>
+                    </div>
+                `
+            },
+            {
+                id: 'content35',
+                date: '2024年11月28日',
+                type: '查档受阻',
+                icon: 'fa-file-text',
+                color: 'purple-500',
+                content: `
+                    <div class="flex items-start space-x-4">
+                        <div class="w-12 h-12 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-500">
+                            <i class="fa fa-file-text text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-neutral-800">2024年11月28日</h3>
+                            <p class="text-neutral-500 mt-1">去一审档案室查"正卷1"缺失内容被设阻</p>
+                        </div>
+                    </div>
+                    <div class="mt-6 bg-neutral-50 rounded-lg p-4">
+                        <h4 class="font-semibold text-neutral-700">查档受阻详情</h4>
+                        <ul class="mt-3 space-y-2">
+                            <li class="flex items-start">
+                                <i class="fa fa-check-circle text-purple-500 mt-1 mr-2"></i>
+                                <span>档案室工作人员拒绝提供查阅</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fa fa-check-circle text-purple-500 mt-1 mr-2"></i>
+                                <span>要求提供复杂审批手续</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fa fa-check-circle text-purple-500 mt-1 mr-2"></i>
+                                <span>关键卷宗内容缺失</span>
+                            </li>
+                        </ul>
+                    </div>
+                `
+            }
+        ];
+
+        // 渲染内容区
+        const contentView = document.getElementById('contentView');
+        function renderContents() {
+            contentView.innerHTML = timelineData.map(item => `
+                <div class="timeline-content${item.id === 'content1' ? ' active' : ''}" id="${item.id}">
+                    ${item.content}
+                </div>
+            `).join('');
+        }
+        renderContents();
+
+        // 内容切换动画与高度自适应
+        function switchContent(targetId) {
+            const allContents = document.querySelectorAll('.timeline-content');
+            const target = document.getElementById(targetId);
+
+            // 1. 记录当前高度
+            const prevActive = document.querySelector('.timeline-content.active');
+            const prevHeight = prevActive ? prevActive.offsetHeight : 0;
+            const nextHeight = target ? target.scrollHeight : 0;
+
+            // 2. 先移除所有active
+            allContents.forEach(c => {
+                c.classList.remove('active');
+                c.style.transition = 'none';
+                c.style.opacity = '0';
+                c.style.transform = 'scale(0.98)';
+                c.style.maxHeight = '0px';
+                c.style.pointerEvents = 'none';
+            });
+
+            // 3. 设置容器min-height动画，防止跳动
+            contentView.style.transition = 'min-height 0.4s cubic-bezier(.4,0,.2,1)';
+            contentView.style.minHeight = prevHeight + 'px';
+
+            // 4. 强制reflow
+            void contentView.offsetWidth;
+
+            // 5. 激活目标内容
+            if (target) {
+                target.classList.add('active');
+                target.style.transition = 'none';
+                target.style.opacity = '0';
+                target.style.transform = 'scale(0.98)';
+                target.style.maxHeight = '0px';
+                target.style.pointerEvents = 'auto';
+
+                // 6. 动画过渡
+                setTimeout(() => {
+                    target.style.transition = 'opacity 0.4s, transform 0.4s, max-height 0.5s';
+                    target.style.opacity = '1';
+                    target.style.transform = 'scale(1)';
+                    target.style.maxHeight = nextHeight + 'px';
+                    // 容器高度平滑过渡
+                    contentView.style.minHeight = nextHeight + 'px';
+                }, 10);
+
+                // 7. 动画结束后，移除max-height限制
+                setTimeout(() => {
+                    target.style.maxHeight = '';
+                    contentView.style.minHeight = '';
+                }, 500);
+                
+                // 移动端自动滚动到顶部
+                if (window.innerWidth <= 767) {
+                    contentView.scrollTop = 0;
+                }
+            }
+        }
+
+        // 时间节点事件（桌面端和移动端）
+        function setupTimeNodes() {
+            document.querySelectorAll('.time-node').forEach(node => {
+                node.addEventListener('click', () => {
+                    // 重置所有节点状态
+                    document.querySelectorAll('.time-node').forEach(n => n.classList.remove('active'));
+                    node.classList.add('active');
+                    // 切换内容
+                    switchContent(node.dataset.content);
+                    // 内容区滚动到顶部
+                    contentView.scrollTop = 0;
+                    
+                    // 移动端自动滚动选中节点到可视区域
+                    if (window.innerWidth <= 767) {
+                        node.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                    }
+                });
+                
+                // 键盘支持
+                node.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        node.click();
+                    }
+                });
+            });
+        }
+        
+        // 初始设置时间节点
+        setupTimeNodes();
+
+        // 初始加载动画
+        document.addEventListener('DOMContentLoaded', () => {
+            contentView.style.opacity = '0';
+            setTimeout(() => {
+                contentView.style.opacity = '1';
+                contentView.style.transition = 'opacity 0.5s ease-in-out';
+            }, 300);
+            
+            // 移动端初始选中第一个节点并滚动到视图中心
+            if (window.innerWidth <= 767) {
+                setTimeout(() => {
+                    const firstNode = document.querySelector('.time-node');
+                    if (firstNode) {
+                        firstNode.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                    }
+                }, 500);
+            }
+        });
+    </script>
+</body>
+</html>
