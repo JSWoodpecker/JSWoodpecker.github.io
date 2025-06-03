@@ -8,15 +8,11 @@
         @page {
             size: A4;
             margin: 2cm 2cm 1.5cm;
-            @bottom-left {
-                content: "来源：" string(source-url);
-                font-size: 10pt;
-                white-space: nowrap; /* 防止换行 */
-            }
+            /* 删除@bottom-left，只保留右下角页码 */
             @bottom-right {
                 content: "第 " counter(page) " 页 / 共 " counter(pages) " 页";
                 font-size: 10pt;
-                white-space: nowrap; /* 防止换行 */
+                white-space: nowrap;
             }
         }
         body {
@@ -316,39 +312,15 @@
             return timestamp;
         }
         
-        // 自动获取来源URL并注入CSS
-        function setSourceUrl() {
-            const url = window.location.href;
-            // 动态创建CSS规则并注入来源URL和页码，分两行
-            const style = document.createElement('style');
-            style.textContent = `
-        @page {
-            @bottom-center {
-                content: "来源：${url}" "\\A" "第 " counter(page) " 页 / 共 " counter(pages) " 页";
-                font-size: 10pt;
-                white-space: pre-line;
-                text-align: left;
-            }
-        }
-    `;
-    document.head.appendChild(style);
-    return url;
-}
-        
         // 打印功能
         function printDocument() {
-            // 在打印前更新文档信息
-            const timestamp = setTimestamp();
-            const sourceUrl = setSourceUrl();
-            
-            // 打印文档
+            setTimestamp();
             window.print();
         }
         
         // 初始化
         window.onload = function() {
             setTimestamp();
-            setSourceUrl();
         };
     </script>
 </body>
