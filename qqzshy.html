@@ -7,14 +7,27 @@
     <style>
         @page {
             size: A4;
-            margin: 2cm 2cm 1.5cm;
-            /* 删除@bottom-left，只保留右下角页码 */
+            margin: 2cm 2cm 2.5cm; /* 增加底部边距避免重叠 */
+            @top-right {
+                content: "案件概述（2019-2024）——程序违法与证据伪造全记录";
+                font-size: 10pt;
+                white-space: nowrap;
+            }
             @bottom-right {
                 content: "第 " counter(page) " 页 / 共 " counter(pages) " 页";
                 font-size: 10pt;
                 white-space: nowrap;
             }
+            @bottom-left {
+                content: ""; /* 清空原有内容 */
+            }
         }
+        
+        /* 打印页脚容器 */
+        .print-footer {
+            display: none;
+        }
+        
         body {
             font-family: "SimSun", "宋体", serif;
             font-size: 16px;
@@ -135,8 +148,31 @@
             }
             
             body {
-                padding-bottom: 30px;
+                padding-bottom: 50px; /* 为页脚留出空间 */
                 background-color: white;
+            }
+            
+            /* 打印页脚 */
+            .print-footer {
+                display: block;
+                position: fixed;
+                bottom: 0.5cm; /* 位于页面底部边距内 */
+                left: 2cm; /* 与页面左边距对齐 */
+                font-size: 9pt;
+                z-index: 1000;
+                width: calc(100% - 4cm); /* 考虑左右边距 */
+                line-height: 1.4;
+                text-align: left;
+                /* 让内容一行显示 */
+                white-space: nowrap;
+            }
+            
+            .footer-timestamp {
+                display: inline;
+                margin-right: 2em;
+            }
+            .footer-source {
+                display: inline;
             }
             
             .section, .subsection {
@@ -156,6 +192,7 @@
                 padding: 0;
                 background-color: transparent;
             }
+            
             /* 新增：打印时页眉右对齐 */
             header {
                 text-align: right !important;
@@ -166,6 +203,12 @@
     </style>
 </head>
 <body>
+    <!-- 打印页脚容器 -->
+    <div class="print-footer">
+        <span class="footer-timestamp" id="footer-timestamp"></span>
+        <span class="footer-source" id="footer-source"></span>
+    </div>
+    
     <div class="print-container">
         <button class="print-button" onclick="printDocument()">
             <i>🖨️</i> 打印文档
@@ -294,34 +337,37 @@
     </div>
 
     <script>
-        // 设置文档生成时间戳
-        function setTimestamp() {
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const day = String(now.getDate()).padStart(2, '0');
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            const seconds = String(now.getSeconds()).padStart(2, '0');
-            
-            const timestamp = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-            
-            // 设置屏幕显示的时间戳
-            document.getElementById('screen-timestamp').textContent = `生成时间：${timestamp}`;
-            
-            return timestamp;
-        }
+    // 设置文档TIME戳
+    function setTimestamp() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+        const timestamp = `TIME：${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
         
-        // 打印功能
-        function printDocument() {
-            setTimestamp();
-            window.print();
-        }
+        // 设置屏幕页脚
+        document.getElementById('screen-timestamp').textContent = timestamp;
         
-        // 初始化
-        window.onload = function() {
-            setTimestamp();
-        };
+        // 设置打印页脚内容
+        document.getElementById('footer-timestamp').textContent = timestamp;
+        document.getElementById('footer-source').textContent = "FROM：" + window.location.href;
+        
+        return timestamp;
+    }
+
+    // 打印功能
+    function printDocument() {
+        setTimestamp();
+        window.print();
+    }
+
+    // 初始化
+    window.onload = function() {
+        setTimestamp();
+    };
     </script>
 </body>
 </html>
