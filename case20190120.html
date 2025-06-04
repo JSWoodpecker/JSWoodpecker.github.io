@@ -26,6 +26,20 @@
             }
         }
         
+        /* 打印页眉容器 */
+        .print-header {
+            display: none;
+            position: fixed;
+            top: 0.5cm;
+            left: 2cm;
+            right: 2cm;
+            height: 2cm;
+            line-height: 2cm;
+            text-align: center;
+            font-size: 10pt;
+            z-index: 1000;
+        }
+        
         /* 打印页脚容器 */
         .print-footer {
             display: none;
@@ -170,12 +184,30 @@
                 white-space: nowrap;
             }
             
+            /* 打印页眉 */
+            .print-header {
+                display: block;
+                position: fixed;
+                top: 0.5cm;
+                left: 2cm;
+                right: 2cm;
+                height: 2cm;
+                line-height: 2cm;
+                text-align: center;
+                font-size: 10pt;
+                z-index: 1000;
+            }
+            
             .footer-timestamp {
                 display: inline;
                 margin-right: 2em;
             }
             .footer-source {
                 display: inline;
+            }
+            .footer-pagenum {
+                display: inline;
+                margin-left: 2em;
             }
             
             .section, .subsection {
@@ -206,10 +238,15 @@
     </style>
 </head>
 <body>
+    <!-- 打印页眉容器 -->
+    <div class="print-header">
+        <span class="header-title"></span><!-- 打印时重复显示标题，此处删除内容，避免打印时重复显示 -->
+    </div>
     <!-- 打印页脚容器 -->
     <div class="print-footer">
         <span class="footer-timestamp" id="footer-timestamp"></span>
         <span class="footer-source" id="footer-source"></span>
+        <span class="footer-pagenum" id="footer-pagenum"></span>
     </div>
     
     <div class="print-container">
