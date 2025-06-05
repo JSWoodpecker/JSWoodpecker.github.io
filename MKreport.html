@@ -51,6 +51,10 @@
             z-index: 100;
         }
         
+        .header .document-name {
+            font-weight: bold;
+        }
+        
         /* 页脚样式 */
         .footer {
             position: fixed;
@@ -84,6 +88,14 @@
             justify-self: flex-end;
         }
         @media print {
+            .header {
+                justify-content: flex-end;
+                text-align: right;
+            }
+            .header .document-name {
+                font-weight: bold;
+                font-size: 16px;
+            }
             .footer {
                 position: fixed;
                 bottom: 0;
@@ -145,7 +157,7 @@
         /* 打印按钮 */
         .print-btn {
             position: fixed;
-            top: 20px;
+            top: 60px; /* 原来20px，向下移两行 */
             right: 20px;
             padding: 10px 20px;
             background: #2c6bac;
