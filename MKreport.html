@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>卷宗材料问题核查报告</title>
+    <style>
+        /* 全局样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "仿宋", "FangSong", "宋体", serif;
+        }
+        
+        body {
+            background: #f5f5f5;
+            color: #333;
+            padding: 20px;
+            font-size: 16px;
+            line-height: 1.8;
+        }
+        
+        /* 公文容器 */
+        .document-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+        
+        /* 页眉样式 */
+        @page {
+            margin: 0;
+        }
+        
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 50px;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            border-bottom: 1px solid #ccc;
+            background: white;
+            z-index: 100;
+        }
+        
+        /* 页脚样式 */
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 40px;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            border-top: 1px solid #ccc;
+            background: white;
+            z-index: 100;
+        }
+        .source-path {
+            text-align: left;
+            flex: 1 1 auto;
+            min-width: 0;
+            white-space: normal; /* 允许自动换行 */
+            word-break: break-all; /* 路径过长时自动断行 */
+            overflow-wrap: break-word;
+            /* 保证“来源：”和路径在一行，只有路径太长才换行 */
+            display: block;
+        }
+        .page-info {
+            text-align: right;
+            flex: 0 0 auto;
+            min-width: 80px;
+            justify-self: flex-end;
+        }
+        @media print {
+            .footer {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                border-top: 1px solid #ccc;
+                background: white;
+                padding: 0 20px;
+                display: flex;
+                justify-content: space-between;
+            }
+            .source-path {
+                text-align: left;
+                white-space: normal;
+                word-break: break-all;
+                overflow-wrap: break-word;
+            }
+            .page-info {
+                text-align: right;
+            }
+        }
+        
+        /* 内容区域 */
+        .content {
+            padding: 70px 40px 60px;
+            counter-reset: section;
+        }
+        
+        /* 公文标题 */
+        .title {
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            margin: 20px 0 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #000;
+        }
+        
+        /* 章节标题 */
+        .section-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin: 30px 0 15px;
+            padding-left: 2em;
+            text-indent: -2em;
+        }
+        
+        /* 问题列表 */
+        .issue-list {
+            margin-left: 2em;
+        }
+        
+        .issue-item {
+            margin-bottom: 15px;
+            text-align: justify;
+            text-indent: 2em;
+        }
+        
+        /* 打印按钮 */
+        .print-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background: #2c6bac;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            z-index: 1000;
+            transition: background 0.3s;
+        }
+        
+        .print-btn:hover {
+            background: #1a4d7e;
+        }
+        
+        /* 响应式调整 */
+        @media (max-width: 768px) {
+            .content {
+                padding: 70px 20px 60px;
+            }
+            
+            .issue-item {
+                margin-left: 0;
+            }
+        }
+        
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            
+            .document-container {
+                box-shadow: none;
+                max-width: 100%;
+                margin: 0;
+            }
+            
+            .print-btn {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="print-btn" onclick="window.print()">打印报告</button>
+    
+    <div class="document-container">
+        <div class="header">
+            <div class="timestamp" id="timestamp"></div>
+            <div class="document-name">卷宗材料问题核查报告</div>
+        </div>
+        
+        <div class="content">
+            <h1 class="title">卷宗材料问题核查报告</h1>
+            
+            <h2 class="section-title">一、卷宗材料完整性问题</h2>
+            <div class="issue-list">
+                <p class="issue-item">1. 立案审批表（第1项）：卷宗中未提及"立案审批表"，缺乏案件立案受理的程序性证明材料。</p>
+                <p class="issue-item">2. 答辩状及送达回证（第5项）：卷宗中未包含被告人或其他当事人的答辩状及对应送达回证，可能影响庭审程序的完整性。</p>
+                <p class="issue-item">3. 诉讼费收取手续（第6项）：卷宗中无诉讼费缴纳凭证、减免审批等相关材料，不符合诉讼费用管理的程序性要求。</p>
+                <p class="issue-item">4. 当事人身份证明、授权委托书（第8项）：未发现被告人身份证明文件（如身份证、户籍信息）及授权委托书（若有委托代理），可能影响诉讼主体资格的合法性审查。</p>
+                <p class="issue-item">5. 调查、询问、讯问笔录（第9项）：卷宗中主要为庭审笔录，缺乏侦查阶段或审查起诉阶段的调查、询问、讯问笔录，可能导致案件事实记录不完整。</p>
+                <p class="issue-item">6. 诉前保全/财产保全材料（第11项）：若案件涉及财产保全或诉前保全，卷宗中无相关申请、裁定及执行材料。</p>
+                <p class="issue-item">7. 司法鉴定材料（第12项）：卷宗中未包含任何司法鉴定报告（如伤情鉴定、文书鉴定等），但第24-27项健康档案提及"软组织损伤"，却未附正式鉴定意见，可能影响证据链的完整性。</p>
+                <p class="issue-item">8. 传票（第13项）：卷宗中仅有"出庭通知书"（第15项），未明确提及"传票"，二者法律性质不同，传票是传唤当事人到庭的法定文书，缺失可能影响程序合法性。</p>
+                <p class="issue-item">9. 代理词（第15项）：卷宗中有被告人自书辩护词（第33-42项），但未包含律师代理词（若有委托律师），可能影响辩护意见的全面记录。</p>
+                <p class="issue-item">10. 延长审理期限审批表（第16项）：卷宗中未提及审理期限延长的审批材料，若存在超期审理情形，可能构成程序违法。</p>
+                <p class="issue-item">11. 撤诉书（第17项）：若案件未涉及撤诉，此项可不追究；若存在撤诉情形，卷宗中无相关文书。</p>
+                <p class="issue-item">12. 宣判公告（第19项）：卷宗中有"开庭公告"（第16项），但未明确"宣判公告"，二者程序意义不同，缺失可能影响宣判公开性的证明。</p>
+                <p class="issue-item">13. 物证处理材料（第21项）：卷宗中未涉及物证扣押、移送、处理等记录（如涉案物品清单、处理凭证），若存在物证，可能违反物证管理规范。</p>
+                <p class="issue-item">14. 妨碍诉讼的强制措施材料（第22项）：若案件中无相关强制措施，此项可不追究；若存在拘传、拘留等措施，卷宗中无记录。</p>
+            </div>
+            
+            <h2 class="section-title">二、卷宗材料规范性问题</h2>
+            <div class="issue-list">
+                <p class="issue-item">1. 送达程序瑕疵：</p>
+                <p class="issue-item" style="text-indent: 4em;">送达起诉书副本笔录显示王贵平拒签拒收（第9项），但庭审笔录却记载其"十日前收到起诉书"（第18项），二者矛盾，涉嫌伪造庭审记录。</p>
+                <p class="issue-item" style="text-indent: 4em;">送达回证存在无日期、受送达人未签字、代收入身份不明（如"陈家如"）等问题（第14、48项），违反《民事诉讼法》关于送达程序的规定。</p>
+                
+                <p class="issue-item">2. 文书制作瑕疵：</p>
+                <p class="issue-item" style="text-indent: 4em;">刑事判决书中出现"王UI平"异常字符（第44项），疑似人为输入错误或恶意窜通，影响文书严肃性。</p>
+                <p class="issue-item" style="text-indent: 4em;">换押证、退卷函等文书存在无日期、无责任人署名问题（第6、52项），违反文书签署规范。</p>
+                
+                <p class="issue-item">3. 证据真实性存疑：</p>
+                <p class="issue-item" style="text-indent: 4em;">起诉书正本第1页无防伪条码（第1项），第2页有防伪条码，前后不一致，疑似变造；量刑建议书、换押证等文书的日期一致性存疑（如多份文书落款日期均为2019年6月11日）。</p>
+                <p class="issue-item" style="text-indent: 4em;">看守所健康档案记录矛盾："自诉在抢劫中致自身损伤"不合常理（第24项），且体检报告被检查人署名为"无名王"（第27项），涉嫌强迫签署或伪造证据。</p>
+                
+                <p class="issue-item">4. 流程衔接瑕疵：</p>
+                <p class="issue-item" style="text-indent: 4em;">法律援助公函显示援助中心6月28日才收到函件（第12项），但委托辩护笔录日期为6月14日（第10项），存在时间逻辑矛盾，可能影响辩护权保障。</p>
+                <p class="issue-item" style="text-indent: 4em;">退卷函未注明日期及责任人（第52项），且案号与王贵平所持裁定书案号不一致（提及"667号"与"669号"），涉嫌程序混乱或档案管理错误。</p>
+            </div>
+            
+            <h2 class="section-title">三、其他程序合法性问题</h2>
+            <div class="issue-list">
+                <p class="issue-item">1. 退侦记录争议：起诉书提及"退侦"，但庭审中公诉人周江红称"无退侦"（第1项），且判决书未记录退侦情况（第42项），可能存在程序违法或文书变造嫌疑。</p>
+                <p class="issue-item">2. 庭审笔录完整性：被告人当庭反映未收到起诉书的陈述未记入庭审笔录（第17项），违反庭审笔录如实记录的法定要求，涉嫌隐匿对被告人有利的陈述。</p>
+            </div>
+            
+            <h2 class="section-title">四、整改建议</h2>
+            <div class="issue-list">
+                <p class="issue-item">1. 补充缺失材料：按立卷规范逐项核查立案审批表、答辩状、诉讼费凭证等材料。</p>
+                <p class="issue-item">2. 核查文书真实性：对存在变造嫌疑的起诉书、庭审笔录等启动司法鉴定。</p>
+                <p class="issue-item">3. 纠正程序瑕疵：对送达回证不规范、文书签署不全等问题，依法补正或作出合理解释。</p>
+                <p class="issue-item">4. 追究违规责任：针对疑似伪造证据、隐匿记录等行为，建议提交纪检监察部门调查。</p>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <div class="source-path" id="source-path"></div>
+            <div class="page-info">
+                <span id="current-page">1</span> / <span id="total-pages">1</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 设置时间戳
+        const now = new Date();
+        const timestamp = now.toLocaleString('zh-CN', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
+        document.getElementById('timestamp').textContent = timestamp;
+
+        // 动态生成来源路径
+        function getSourcePath() {
+            // 获取当前文件路径（如通过file协议访问则可用location.pathname）
+            let path = window.location.pathname || '';
+            // 仅保留最后两级目录和文件名
+            let parts = path.split('/').filter(Boolean);
+            let shortPath = parts.slice(-3).join('/');
+            // 若为空则显示默认
+            if (!shortPath) shortPath = '未知来源路径';
+            return '来源：' + shortPath;
+        }
+        document.getElementById('source-path').textContent = getSourcePath();
+
+        // 设置页码（实际应用中需要更复杂的页码计算）
+        document.getElementById('current-page').textContent = '1';
+        document.getElementById('total-pages').textContent = '1';
+
+        // 打印时添加页眉页脚
+        window.addEventListener('beforeprint', () => {
+            document.querySelector('.header').style.position = 'fixed';
+            document.querySelector('.footer').style.position = 'fixed';
+        });
+
+        window.addEventListener('afterprint', () => {
+            document.querySelector('.header').style.position = 'absolute';
+            document.querySelector('.footer').style.position = 'absolute';
+        });
+    </script>
+</body>
+</html>
