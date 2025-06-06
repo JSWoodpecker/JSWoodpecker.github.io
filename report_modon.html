@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>卷宗材料问题核查报告</title>
+    <style>
+        /* 全局样式 - 公文规范 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "仿宋", "FangSong", "宋体", serif;
+        }
+        
+        body {
+            background: #f0f4f8;
+            color: #333;
+            padding: 20px;
+            font-size: 16px;
+            line-height: 1.8;
+            min-height: 100vh;
+            background-image: linear-gradient(rgba(255,255,255,0.9), rgba(255,255,255,0.9)), 
+                              url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h100v100H0z' fill='none'/%3E%3Cpath d='M20 20h10v10H20zM60 20h10v10H60zM20 60h10v10H20zM60 60h10v10H60z' fill='%23e6eef7'/%3E%3C/svg%3E");
+        }
+        
+        /* 公文容器 */
+        .document-container {
+            max-width: 1000px;
+            margin: 20px auto;
+            background: white;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.1);
+            position: relative;
+            border: 1px solid #d9d9d9;
+            overflow: hidden;
+        }
+        
+        /* 普通文件头 */
+        .red-header {
+            height: 80px;
+            background: #f8f9fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            border-bottom: 2px solid #e9ecef;
+        }
+        
+        .red-header h1 {
+            color: #333;
+            font-size: 24px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            position: relative;
+            margin-bottom: 10px;
+        }
+        
+        /* 页眉页脚打印布局 - 已修改 */
+        @page {
+            size: A4;
+            margin: 2cm 2cm;
+            
+            @top-left {
+                content: "时间：" var(--timestamp);
+                font-size: 10pt;
+                white-space: nowrap;
+                color: #666;
+            }
+            
+            @top-right {
+                content: "卷宗材料问题核查报告";
+                font-weight: bold;
+                font-size: 10pt;
+                white-space: nowrap;
+                color: #333;
+            }
+            
+            @bottom-left {
+                content: "来源：" var(--source-path);
+                font-size: 10pt;
+                color: #666;
+                white-space: normal;
+                overflow-wrap: break-word;
+                max-width: 70%;
+            }
+            
+            @bottom-right {
+                content: "第 " counter(page) " 页　　共 " counter(pages) " 页";
+                font-size: 10pt;
+                white-space: nowrap;
+                color: #666;
+            }
+        }
+
+        /* 屏幕显示页眉 */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 50px;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            border-bottom: 1px solid #ccc;
+            background: white;
+            z-index: 100;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .header .document-name {
+            font-weight: bold;
+            font-size: 10pt;
+            white-space: nowrap;
+            margin-right: 20px;
+            color: #333;
+        }
+        
+        /* 屏幕显示页脚 */
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 40px;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            border-top: 1px solid #ccc;
+            background: white;
+            z-index: 100;
+            box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+        }
+        
+        /* 来源路径样式 - 冒号后直接接内容 */
+        .source-path {
+            text-align: left;
+            white-space: normal;
+            overflow-wrap: break-word;
+            flex: 1;
+            max-width: 70%;
+            display: inline-flex;
+            align-items: center;
+        }
+        
+        .source-path::before {
+            content: "来源：";
+            margin-right: 0.5em;
+        }
+        
+        /* 打印样式 */
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            
+            .document-container {
+                box-shadow: none;
+                max-width: 100%;
+                margin: 0;
+                border: none;
+            }
+            
+            .print-btn, .red-header {
+                display: block;
+            }
+
+            /* 隐藏屏幕版页眉页脚 */
+            .header, .footer {
+                display: none !important;
+            }
+            
+            /* 打印专用信息 */
+            .print-only-info {
+                display: block;
+                text-align: center;
+                margin-bottom: 15px;
+                font-size: 14px;
+                color: #666;
+            }
+        }
+        
+        /* 内容区域 - 公文规范 */
+        .content {
+            padding: 50px 60px 60px;
+        }
+        
+        /* 公文标题 */
+        .title {
+            text-align: center;
+            font-size: 22px;
+            font-weight: bold;
+            margin: 30px 0;
+            padding-bottom: 20px;
+            position: relative;
+            color: #333;
+            letter-spacing: 4px;
+        }
+        
+        .title:after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 2px;
+            background: #6c757d;
+        }
+        
+        /* 公文信息 */
+        .document-info {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            font-size: 15px;
+        }
+        
+        /* 章节标题 */
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin: 35px 0 20px;
+            padding-left: 0;
+            color: #333;
+            border-left: 4px solid #6c757d;
+            padding-left: 12px;
+        }
+        
+        /* 问题列表 - 公文规范 */
+        .issue-list {
+            margin-left: 0;
+            padding-left: 0;
+        }
+        
+        .issue-item {
+            margin-bottom: 20px;
+            text-align: justify;
+            text-indent: 2em; /* 首行缩进2字符 */
+            position: relative;
+            padding-left: 0;
+            line-height: 2;
+        }
+        
+        /* 手动编号样式 */
+        .issue-number {
+            display: inline-block;
+            width: 1.8em;
+            margin-right: 0.3em;
+            text-align: right;
+            font-weight: bold;
+        }
+        
+        .issue-severity {
+            color: #dc3545;
+            font-weight: normal;
+            margin-left: 8px;
+        }
+        
+        /* 打印按钮 */
+        .print-btn {
+            position: fixed;
+            top: 70px;
+            right: 20px;
+            padding: 12px 25px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            z-index: 1000;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: "宋体", "SimSun", serif;
+        }
+        
+        .print-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(220, 53, 69, 0.4);
+        }
+        
+        /* 响应式调整 */
+        @media (max-width: 768px) {
+            .content {
+                padding: 50px 20px 60px;
+            }
+            
+            .section-title {
+                font-size: 18px;
+            }
+            
+            .title {
+                font-size: 20px;
+            }
+            
+            .red-header h1 {
+                font-size: 20px;
+            }
+            
+            .document-info {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .footer {
+                flex-direction: column;
+                height: auto;
+                padding: 10px;
+            }
+        }
+        
+        /* 报告摘要 */
+        .report-summary {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #e1e1e1;
+            background: #fafafa;
+            border-radius: 2px;
+        }
+        
+        .summary-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+            text-align: center;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e1e1e1;
+        }
+        
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .summary-item {
+            text-align: center;
+            padding: 12px;
+            border-radius: 2px;
+            background: white;
+            border: 1px solid #e1e1e1;
+        }
+        
+        .summary-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #dc3545;
+            margin: 10px 0;
+        }
+        
+        .summary-label {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        /* 签名区域 */
+        .signature-area {
+            margin-top: 60px;
+            padding-top: 20px;
+            border-top: 1px solid #e1e1e1;
+            text-align: right;
+        }
+        
+        .signature-line {
+            display: inline-block;
+            width: 200px;
+            border-bottom: 1px solid #333;
+            margin-top: 40px;
+            margin-left: 20px;
+        }
+        
+        .signature-label {
+            margin-top: 5px;
+            font-size: 14px;
+            color: #666;
+            text-align: center;
+            width: 200px;
+            display: inline-block;
+            margin-left: 20px;
+        }
+        
+        /* 公文编号 */
+        .document-number {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        /* 打印专用信息 */
+        .print-only-info {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <button class="print-btn" onclick="handlePrint()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M5 1a2 2 0 0 0-2 2v1h10V3a2 2 0 0 0-2-2H5zm6 8H5a1 1 0 0 0-1 1v3a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-3a1 1 0 0 0-1-1z"/>
+            <path d="M0 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-1v-2a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v2H2a2 2 0 0 1-2-2V7zm2.5 1a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1z"/>
+        </svg>
+        打印报告
+    </button>
+    
+    <div class="document-container">
+        <!-- 普通文件头 -->
+        <div class="red-header">
+            <h1>卷宗材料问题核查报告</h1>
+            <div class="document-number">核查编号：2025-HC-003</div>
+        </div>
+        
+        <div class="header">
+            <div class="timestamp" id="timestamp"></div>
+            <div class="document-name">卷宗材料问题核查报告</div>
+        </div>
+        
+        <div class="content">
+            <h1 class="title">卷宗材料问题核查报告</h1>
+            
+            <div class="print-only-info">
+                <div>来源：<span id="print-source"></span></div>
+                <div>生成时间：<span id="print-time"></span></div>
+            </div>
+            
+            <div class="document-info">
+                <div>卷宗编号：JC2025-00458</div>
+                <div>案件名称：王某合同诈骗案</div>
+                <div>核查日期：2025年06月05日</div>
+            </div>
+            
+            <div class="report-summary">
+                <div class="summary-title">问题核查摘要</div>
+                <p>本报告对卷宗编号为JC2025-00458的案件材料进行全面核查，共发现各类问题18项。其中程序性问题7项，材料完整性问题6项，内容规范性问题5项。主要问题集中在侦查措施审批缺失、证据提取手续不全、法律文书表述不规范等方面，具体问题分布如下：</p>
+                
+                <div class="summary-grid">
+                    <div class="summary-item">
+                        <div class="summary-value">18</div>
+                        <div class="summary-label">总问题数</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-value">7</div>
+                        <div class="summary-label">程序性问题</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-value">6</div>
+                        <div class="summary-label">完整性问题</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-value">5</div>
+                        <div class="summary-label">规范性问题</div>
+                    </div>
+                </div>
+            </div>
+            
+            <h2 class="section-title">一、卷宗材料完整性问题</h2>
+            <div class="issue-list">
+                <p class="issue-item">
+                    <span class="issue-number">1.</span> 
+                    立案决定书（第2页）：未附立案审批流程记录，缺少承办人及领导签字环节。
+                    <span class="issue-severity">（严重）</span>
+                </p>
+                <p class="issue-item">
+                    <span class="issue-number">2.</span> 
+                    拘留证（第5页）：未填写拘留具体时间及执行民警签名，法律手续不完整。
+                    <span class="issue-severity">（严重）</span>
+                </p>
+                <p class="issue-item">
+                    <span class="issue-number">3.</span> 
+                    搜查笔录（第11页）：未附搜查现场照片及物品清单，证据固定不完整。
+                    <span class="issue-severity">（中等）</span>
+                </p>
+                <p class="issue-item">
+                    <span class="issue-number">4.</span> 
+                    被害人陈述（第15页）：缺少首次询问告知权利义务的记录材料。
+                    <span class="issue-severity">（中等）</span>
+                </p>
+                <p class="issue-item">
+                    <span class="issue-number">5.</span> 
+                    鉴定机构资质证明（第23页）：未提供司法鉴定许可证复印件，影响证据效力。
+                    <span class="issue-severity">（中等）</span>
+                </p>
+                <p class="issue-item">
+                    <span class="issue-number">6.</span> 
+                    退赃凭证（第30页）：未注明退赃方式及收款单位盖章，资金流向证明缺失。
+                    <span class="issue-severity">（轻微）</span>
+                </p>
+            </div>
+            
+            <h2 class="section-title">二、材料内容规范性问题</h2>
+            <div class="issue-list">
+                <p class="issue-item">
+                    <span class="issue-number">7.</span> 
+                    讯问笔录（第8页）：多处修改未按手印确认，文本修改程序不规范。
+                    <span class="issue-severity">（严重）</span>
+                </p>
+                <p class="issue-item">
+                    <span class="issue-number">8.</span> 
+                    现场勘查图（第12页）：未标注比例尺及指北针，图示内容不符合技术规范。
+                    <span class="issue-severity">（严重）</span>
+                </p>
+                <p class="issue-item">
+                    <span class="issue-number">9.</span> 
+                    起诉意见书（第28页）：犯罪事实描述模糊，未明确具体作案时间及地点。
+                    <span class="issue-severity">（中等）</span>
+                </p>
+                <p class="issue-item">
+                    <span class="issue-number">10.</span> 
+                    证人身份证复印件（第18页）：未注明“与原件核对无误”字样及核对人签名。
+                    <span class="issue-severity">（中等）</span>
+                </p>
+                <p class="issue-item">
+                    <span class="issue-number">11.</span> 
+                    扣押物品清单（第25页）：物品特征描述不详细，缺乏唯一性标识记录。
+                    <span class="issue-severity">（轻微）</span>
+                </p>
+            </div>
+            
+            <h2 class="section-title">三、程序规范性问题</h2>
+            <div class="issue-list">
+                <p class="issue-item">
+                    <span class="issue-number">12.</span> 
+                    传唤证（第4页）：传唤时间超出法定24小时限制，程序存在违法嫌疑。
+                    <span class="issue-severity">（严重）</span>
+                </p>
+                <p class="issue-item">
+                    <span class="issue-number">13.</span> 
+                    辨认笔录（第14页）：辨认过程未全程录音录像，违反侦查程序规定。
+                    <span class="issue-severity">（严重）</span>
+                </p>
+                <p class="issue-item">
+                    <span class="issue-number">14.</span> 
+                    延长侦查羁押期限通知书（第20页）：未告知犯罪嫌疑人及其家属。
+                    <span class="issue-severity">（中等）</span>
+                </p>
+                <p class="issue-item">
+                    <span class="issue-number">15.</span> 
+                    听取辩护人意见记录（第22页）：未记录具体意见内容及采纳情况。
+                    <span class="issue-severity">（中等）</span>
+                </p>
+                <p class="issue-item">
+                    <span class="issue-number">16.</span> 
+                    通知家属记录（第6页）：未注明通知方式及送达回执，通知程序不完整。
+                    <span class="issue-severity">（轻微）</span>
+                </p>
+            </div>
+            
+            <h2 class="section-title">四、补充核查建议</h2>
+            <div class="issue-list">
+                <p class="issue-item">
+                    <span class="issue-number">17.</span> 
+                    针对完整性缺失问题，建议于5个工作日内补充立案审批表、搜查物品清单等关键材料。
+                </p>
+                <p class="issue-item">
+                    <span class="issue-number">18.</span> 
+                    针对程序违法问题，需重新核查传唤审批流程，并对辨认过程合法性进行专项说明。
+                </p>
+                <p class="issue-item">
+                    <span class="issue-number">19.</span> 
+                    规范性问题需在3个工作日内完成文书补正，确保所有法律文书符合《公安机关办理刑事案件程序规定》要求。
+                </p>
+                <p class="issue-item">
+                    <span class="issue-number">20.</span> 
+                    建议建立卷宗材料预审机制，在案件移送审查起诉前进行全面质量检查，避免类似问题再次发生。
+                </p>
+            </div>
+            
+            <div class="signature-area">
+                <div>
+                    核查人：<span class="signature-line"></span>
+                    <span class="signature-label">签字</span>
+                </div>
+                
+                <div style="margin-top: 30px;">
+                    审核人：<span class="signature-line"></span>
+                    <span class="signature-label">签字</span>
+                </div>
+                
+                <div style="margin-top: 30px;">
+                    日期：<span class="signature-line" style="width: 150px;"></span>
+                    <span class="signature-label" style="width: 150px;">年 月 日</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <div class="source-path" id="source-path"></div>
+            <div class="page-info">页码：<span id="current-page"></span> / <span id="total-pages">1</span></div>
+        </div>
+    </div>
+
+    <script>
+        // 获取动态来源路径
+        function getRelativeSourcePath() {
+            const path = window.location.pathname || '';
+            const parts = path.split('/').filter(Boolean);
+            return parts.slice(-3).join('/') || '案件管理系统/经济犯罪卷宗/2025-004号';
+        }
+
+        // 动态更新时间戳和来源路径
+        function updateDynamicInfo() {
+            const now = new Date();
+            const timestamp = now.toLocaleString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            // 生成长路径用于测试
+            const sourcePath = getRelativeSourcePath() + '/记录/2025-00458-卷宗问题核查报告';
+            
+            // 更新DOM显示（屏幕版）
+            document.getElementById('timestamp').textContent = `时间：${timestamp}`;
+            document.getElementById('source-path').textContent = sourcePath;
+            
+            // 更新打印专用元素
+            document.getElementById('print-source').textContent = sourcePath;
+            document.getElementById('print-time').textContent = timestamp;
+            
+            // 更新CSS变量用于打印
+            document.documentElement.style.setProperty('--timestamp', `"${timestamp}"`);
+            document.documentElement.style.setProperty('--source-path', `"${sourcePath}"`);
+            
+            // 更新页码信息
+            updatePageInfo();
+        }
+
+        // 更新页码信息
+        function updatePageInfo() {
+            // 模拟页码计算 - 实际环境中可能需要更复杂的逻辑
+            const contentHeight = document.querySelector('.content').offsetHeight;
+            const pageHeight = window.innerHeight * 0.85; // 假设每页显示85%的窗口高度
+            const totalPages = Math.ceil(contentHeight / pageHeight);
+            document.getElementById('total-pages').textContent = totalPages;
+            document.getElementById('current-page').textContent = 1; // 简化处理，仅显示第一页
+            
+            // 监听滚动事件更新当前页码
+            window.addEventListener('scroll', () => {
+                const scrollTop = window.scrollY;
+                const currentPage = Math.ceil(scrollTop / pageHeight) + 1;
+                document.getElementById('current-page').textContent = Math.min(currentPage, totalPages);
+            });
+        }
+
+        // 打印前处理函数
+        function handlePrint() {
+            updateDynamicInfo();
+            setTimeout(() => {
+                window.print();
+            }, 100);
+        }
+
+        // 页面加载时初始化
+        window.addEventListener('load', updateDynamicInfo);
+    </script>
+</body>
+</html>
