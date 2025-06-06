@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>通用文档模板v1.0.0</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm 2cm 2.5cm;
+            @top-right {
+                content: "此模板可以用，效果基本符合预期";
+                font-weight: bold;
+                font-style: italic;
+                text-decoration: none;
+                font-size: 10pt;
+                white-space: nowrap;
+                position: relative;
+            }
+            @top-right:after {
+                content: "";
+                position: absolute;
+                bottom: -2px;
+                left: 0;
+                width: 100%;
+                height: 1px;
+                background-color: #ccc;
+            }
+            @bottom-right {
+                content: "第 " counter(page) " 页\3000\3000共" counter(pages) " 页";
+                font-size: 10pt;
+                white-space: nowrap;
+                position: relative;
+            }
+            @bottom-right:before {
+                content: "";
+                position: absolute;
+                top: -8px;
+                left: 0;
+                width: 100%;
+                height: 1px;
+                background-color: #ccc;
+            }
+            @bottom-left {
+                content: "";
+            }
+        }
+
+        .print-header {
+            display: none; /* 确保屏幕模式下页眉隐藏 */
+            position: fixed;
+            top: 0.5cm;
+            left: 2cm;
+            right: 2cm;
+            height: 2cm;
+            line-height: 2cm;
+            font-size: 10pt;
+            z-index: 1000;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            padding-top: 12px;
+        }
+
+        .print-footer {
+            display: none;
+            position: fixed;
+            bottom: 0.5cm;
+            left: 2cm;
+            font-size: 9pt;
+            z-index: 1000;
+            width: calc(100% - 4cm);
+            line-height: 1.4;
+            text-align: left;
+            white-space: nowrap;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .footer-content {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .footer-pagenum {
+            margin-top: auto;
+            margin-left: auto;
+        }
+
+        /* 屏幕模式下隐藏顶部和底部时间戳 */
+        .screen-footer, #header-timestamp {
+            display: none;
+        }
+
+        body {
+            font-family: "SimSun", "宋体", serif;
+            font-size: 16px;
+            line-height: 1.5;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-top: 10px;
+        }
+        h1 {
+            text-align: center;
+            margin-left: auto;
+            margin-right: auto;
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #1a237e;
+        }
+        h2, h3 {
+            text-align: left;
+            margin-left: 0;
+            margin-right: 0;
+        }
+        h2 {
+            font-size: 18px;
+            margin-top: 25px;
+            margin-bottom: 12px;
+            color: #1a237e;
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 5px;
+            display: inline-block;
+        }
+        h3 {
+            font-size: 16px;
+            margin-top: 18px;
+            margin-bottom: 8px;
+            color: #1a237e;
+        }
+        p {
+            margin-bottom: 12px;
+            text-indent: 2em;
+            line-height: 1.6;
+        }
+        .section {
+            margin-bottom: 28px;
+            background-color: white;
+            padding: 15px;
+            border-radius: 3px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .list-item {
+            margin-left: 0;
+            margin-bottom: 10px;
+        }
+        .list-item::before {
+            content: none;
+        }
+
+        .print-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+        }
+        .print-button {
+            background-color: #1a237e;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .print-button:hover {
+            background-color: #0d1a5c;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .watermark {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-30deg);
+            font-size: 72px;
+            color: rgba(26, 35, 126, 0.05);
+            z-index: -1;
+            white-space: nowrap;
+            font-weight: bold;
+            pointer-events: none;
+        }
+
+        @media print {
+            .print-container {
+                display: none;
+            }
+            .screen-footer {
+                display: none;
+            }
+            body {
+                padding-bottom: 50px;
+                background-color: white;
+            }
+            .print-footer {
+                display: flex;
+            }
+            .print-header {
+                display: none;
+            }
+            .footer-timestamp, .footer-source, .footer-pagenum {
+                display: inline; /* 恢复来源路径显示 */
+            }
+            .section, .subsection {
+                page-break-inside: avoid;
+            }
+            h1, h2, h3 {
+                page-break-after: avoid;
+            }
+            .watermark {
+                display: none;
+            }
+            .section {
+                box-shadow: none;
+                padding: 0;
+                background-color: transparent;
+            }
+            header {
+                text-align: right !important;
+            }
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 6px;
+                font-size: 15px;
+                max-width: 100vw;
+            }
+            .section {
+                padding: 6px;
+                margin-bottom: 16px;
+                border-radius: 0;
+                box-shadow: none;
+            }
+            h1 {
+                font-size: 18px;
+            }
+            h2 {
+                font-size: 16px;
+                padding-bottom: 2px;
+                margin-top: 16px;
+                margin-bottom: 8px;
+            }
+            h3 {
+                font-size: 14px;
+                margin-top: 10px;
+                margin-bottom: 6px;
+            }
+            .list-item {
+                margin-bottom: 6px;
+            }
+            .watermark {
+                font-size: 32px;
+            }
+            .section, .subsection, .list-item, h2, h3, p {
+                word-break: break-all;
+                overflow-wrap: break-word;
+                white-space: normal;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 打印页眉容器 - 屏幕模式下已隐藏 -->
+    <div class="print-header">
+        <span class="footer-timestamp" id="header-timestamp"></span>
+        <span class="header-title"></span>
+    </div>
+    <!-- 打印页脚容器 -->
+    <div class="print-footer">
+        <div class="footer-content">
+            <span class="footer-source" id="footer-source"></span>
+            <span class="footer-timestamp" id="footer-timestamp"></span>
+        </div>
+        <span class="footer-pagenum" id="footer-pagenum"></span>
+    </div>
+    
+    <div class="print-container">
+        <button class="print-button" onclick="printDocument()">
+            <i>🖨️</i> 打印文档
+        </button>
+    </div>
+    
+    <div class="watermark">Justice Scale Woodpecker</div>
+    
+    <header>
+        <h1>人工智能伦理与社会治理研究</h1>
+    </header>
+    
+    <!-- 章节示例 - 引言 -->
+    <div class="section">
+        <h2>一、研究背景与意义</h2>
+        <p>随着人工智能技术的迅猛发展，其在医疗、交通、金融等领域的应用日益广泛，深刻改变着人类社会的生产生活方式。然而，算法偏见、数据隐私泄露、自主决策系统的责任界定等伦理问题也随之凸显，成为制约人工智能健康发展的重要因素。研究人工智能伦理与社会治理，不仅是技术发展的内在要求，更是维护社会公平正义、保障人类权益的必然选择。</p>
+        
+        <h3>（一）技术发展现状</h3>
+        <p>当前，机器学习、自然语言处理、计算机视觉等人工智能技术取得突破性进展。以深度学习为例，其在图像识别、语音识别等领域的准确率已超越人类水平。据国际机器人联合会（IFR）统计，2024年全球工业机器人安装量同比增长18%，服务机器人市场规模突破500亿美元。这些技术的广泛应用在提高生产效率的同时，也带来了劳动力结构变革、技能需求转型等社会挑战。</p>
+        
+        <h3>（二）伦理问题的核心维度</h3>
+        <div class="list-item">
+            <p>1. <strong>算法公平性</strong>：机器学习模型可能因训练数据偏差导致决策歧视，如招聘算法对特定群体的隐性排斥</p>
+        </div>
+        <div class="list-item">
+            <p>2. <strong>数据隐私</strong>：大规模数据采集与分析过程中，个人敏感信息的收集、存储和使用存在泄露风险</p>
+        </div>
+        <div class="list-item">
+            <p>3. <strong>自主决策责任</strong>：自动驾驶汽车、医疗诊断系统等自主系统在产生不良后果时，责任主体的界定面临法律与伦理困境</p>
+        </div>
+    </div>
+    
+    <!-- 章节示例 - 主体内容 -->
+    <div class="section">
+        <h2>二、国际治理经验与启示</h2>
+        <p>主要发达国家和国际组织已率先开展人工智能伦理治理的探索，形成了各具特色的治理模式。</p>
+        
+        <h3>（一）欧盟治理框架</h3>
+        <p>欧盟《人工智能法案》（AI Act）将人工智能系统分为四个风险等级，实施差异化监管：</p>
+        <div class="list-item">
+            <p>• 不可接受风险：禁止使用，如社会评分系统</p>
+        </div>
+        <div class="list-item">
+            <p>• 高风险：需通过严格合规评估，如医疗诊断AI</p>
+        </div>
+        <div class="list-item">
+            <p>• 有限风险：需满足透明度要求，如聊天机器人</p>
+        </div>
+        <div class="list-item">
+            <p>• 低风险：自我声明即可，如娱乐类AI</p>
+        </div>
+        
+        <h3>（二）美国治理路径</h3>
+        <p>美国采取“行业自律+政府引导”的治理模式，侧重通过标准制定和最佳实践指南推动伦理落地。国家标准与技术研究院（NIST）发布的《人工智能风险管理框架》（AI RMF）提出了“识别-评估-缓解-监控”的全流程风险管理模型，强调私营部门在伦理治理中的主体作用。</p>
+    </div>
+    
+    <!-- 章节示例 - 结论与建议 -->
+    <div class="section">
+        <h2>三、中国人工智能伦理治理的路径选择</h2>
+        <p>立足我国国情，构建兼顾技术创新与伦理规范的治理体系，需要从以下方面着力：</p>
+        
+        <h3>（一）制度建设层面</h3>
+        <p>加快制定《人工智能伦理规范》，明确算法审计、数据使用、风险评估等核心要求，建立“伦理影响评估”（Ethical Impact Assessment, EIA）制度，对高风险AI应用实施事前审查与事后监管。</p>
+        
+        <h3>（二）技术创新层面</h3>
+        <div class="list-item">
+            <p>1. 研发“可解释AI”（XAI）技术，提升算法决策的透明度</p>
+        </div>
+        <div class="list-item">
+            <p>2. 构建“鲁棒性AI”框架，增强模型对偏差数据的抗干扰能力</p>
+        </div>
+        <div class="list-item">
+            <p>3. 开发隐私计算技术，实现“数据可用不可见”的安全共享</p>
+        </div>
+        
+        <h3>（三）社会参与层面</h3>
+        <p>建立由政府、企业、科研机构、公众代表组成的“人工智能伦理委员会”，形成多元共治机制。加强人工智能伦理教育，提升公众对技术的认知与参与度，培育理性包容的技术发展生态。</p>
+        
+        <p>人工智能的发展是一把“双刃剑”，只有在技术创新与伦理规范之间寻求平衡，才能推动其真正成为增进人类福祉的强大力量。构建科学有效的伦理治理体系，既是应对当下挑战的必然选择，也是面向未来的战略布局。</p>
+    </div>
+    
+    <!-- 屏幕底部时间戳 - 已隐藏 -->
+    <div class="screen-footer">
+        <div class="timestamp" id="screen-timestamp"></div>
+    </div>
+
+    <script>
+        function setTimestamp() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            const timestamp = `TIME：${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+            
+            document.getElementById('screen-timestamp').textContent = timestamp; // 赋值但容器已隐藏
+            document.getElementById('header-timestamp').textContent = timestamp; // 赋值但容器已隐藏
+            document.getElementById('footer-source').textContent = "FROM：" + window.location.href;
+            document.getElementById('footer-timestamp').textContent = timestamp;
+        }
+
+        function printDocument() {
+            setTimestamp();
+            window.print();
+        }
+
+        window.onload = function() {
+            setTimestamp();
+        };
+    </script>
+</body>
+</html>
